@@ -70,14 +70,13 @@ def return_filtered_json():
         try:
             cursor = mydb.cursor()
             final_statement = chars_per_film.format(film)
-            print(final_statement)
+
             cursor.execute(final_statement)
             result = cursor.fetchall()
-            print("result: " + str(result))
             master_dict[film]=result
         except mysql.connector.Error as error:
             print('Failed to retrieve records from table {}'.format(error))
-    print(json.dumps(master_dict))
+    print(json.dumps(master_dict, indent=2))
     
 filter_chars_insert()
 return_filtered_json()
