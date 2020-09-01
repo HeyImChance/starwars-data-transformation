@@ -7,6 +7,7 @@ for the Star Wars film 'A New Hope' and place it in a JSON file.
 import requests
 import json
 import sys
+from itertools import chain
 
 # Made it so this script is capable of getting any film data offered by SWAPI.
 film_input = input("Enter a film number 1-6: ")
@@ -18,14 +19,14 @@ except ValueError:
 if (film_num <=0 or film_num > 6):
     sys.exit("Please enter a number between 1 and 6")
 
-# These will be assembled into master dict after each dict is assembled
-master_character_dict = {}
-master_planets_dict = {}
-master_starships_dict = {}
-master_vehicles_dict = {}
-master_species_dict = {}
+# These will be assembled into master dict after each list is assembled
+master_character_list = []
+master_planets_list = []
+master_starships_list = []
+master_vehicles_list = []
+master_species_list = []
 
-# Take in json, extract all data that doesn't cross-reference
+# Take in json, transform and extract all data that doesn't cross-reference
 def transform_char(character_dict):
     # Clean up cross-referencing data
     if 'homeworld' in character_dict:
@@ -38,9 +39,10 @@ def transform_char(character_dict):
         del character_dict['vehicles']
     if 'starships' in character_dict:
         del character_dict['starships']
+    # Height sometimes returned as 'unknown'
     if character_dict['height'] == 'unknown':
         character_dict['height'] = 0
-    # Mass values are potentially in the 1000s
+    # Mass values are potentially in the 1000s, so remove commas for conversion
     if ',' in character_dict['mass']:
         character_dict['mass'] = character_dict['mass'].replace(',','')
     if character_dict['mass'] == 'unknown':
@@ -81,12 +83,15 @@ def transform_species(species_dict):
         del species_dict['films']
     return species_dict  
 
+# Converts CM to Inches
 def convert_height(height):
     return (height / 2.54)
 
+# Converts KG to Pounds
 def convert_weight(weight):
     return (weight * 2.205)
 
+# Get film data for supplied film number
 film_json = requests.get(f"http://swapi.dev/api/films/{film_num}/").json()
 
 characters_list = film_json.get('characters')
@@ -95,32 +100,34 @@ starships_list = film_json.get('starships')
 vehicles_list = film_json.get('vehicles')
 species_list = film_json.get('species')
 
+# Make all nested requests, run transform functions and append to master list
 for character in characters_list:
     character_json = requests.get(character).json()
-    master_character_dict.update(transform_char(character_json))
+    master_character_list.append(transform_char(character_json))
 
 for planet in planets_list:
     planet_json = requests.get(planet).json()
-    master_planets_dict.update(transform_planet(planet_json))
+    master_planets_list.append(transform_planet(planet_json))
 
 for starship in starships_list:
     starship_json = requests.get(starship).json()
-    master_starships_dict.update(transform_starship(starship_json))
+    master_starships_list.append(transform_starship(starship_json))
 
 for vehicle in vehicles_list:
     vehicle_json = requests.get(vehicle).json()
-    master_vehicles_dict.update(transform_vehicle(vehicle_json))
+    master_vehicles_list.append(transform_vehicle(vehicle_json))
 
 for species in species_list:
     species_json = requests.get(species).json()
-    master_species_dict.update(transform_species(species_json))
+    master_species_list.append(transform_species(species_json))
 
-film_json['characters'] = master_character_dict
-film_json['planets'] = master_planets_dict
-film_json['starships'] = master_starships_dict
-film_json['vehicles'] = master_vehicles_dict
-film_json['species'] = master_species_dict
+# Replace values in original json with master lists
+film_json['characters'] = master_character_list
+film_json['planets'] = master_planets_list
+film_json['starships'] = master_starships_list
+film_json['vehicles'] = master_vehicles_list
+film_json['species'] = master_species_list
 
-final_json = json.dumps(film_json)
-with open('task_two.json', 'w', indent=4) as outfile:
-    json.dump(final_json, outfile)
+# Write indented json to file
+with open('task_two.json', 'w') as outfile:
+    json.dump(film_json, outfile, indent=4)

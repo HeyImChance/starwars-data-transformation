@@ -70,7 +70,6 @@ def return_filtered_json():
         try:
             cursor = mydb.cursor()
             final_statement = chars_per_film.format(film)
-
             cursor.execute(final_statement)
             result = cursor.fetchall()
             master_dict[film]=result
