@@ -7,7 +7,6 @@ for the Star Wars film 'A New Hope' and place it in a JSON file.
 import requests
 import json
 import sys
-from itertools import chain
 
 # Made it so this script is capable of getting any film data offered by SWAPI.
 film_input = input("Enter a film number 1-6: ")
